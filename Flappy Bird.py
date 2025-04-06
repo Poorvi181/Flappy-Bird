@@ -10,6 +10,10 @@ bg1=pygame.image.load("GameDev2/grassbg.png")
 bg2=pygame.image.load("GameDev2/ground.png")
 groundvel= 0
 speed= 4
+fps= 60
+font= pygame.font.SysFont("Bauhaus 93",60)
+score= 0
+clock= pygame.time.Clock()
 class Bird(pygame.sprite.Sprite):
     def __init__(self,x,y):
         pygame.sprite.Sprite.__init__(self)
@@ -29,14 +33,31 @@ class Bird(pygame.sprite.Sprite):
 flappy= Bird(100,300)
 Birdgroup= pygame.sprite.Group()
 Birdgroup.add(flappy)
+def drawtext(text,x,y):
+    txt= font.render(text,True,"navy")
+    screen.blit(txt,(x,y))
+class pipe(pygame.sprite.Sprite):
+    def __init__(self,x,y,position):
+        super().__init__()
+        self.image= pygame.image.load("GameDev2/pipe.png")
+        self.rect= self.image.get_rect()
+        if position== 1:
+            self.image= pygame.transform.flip(self.image,False,True)
+            self.rect.bottomleft= [x,y]
+        elif position== -1:
+            self.rect.topleft= [x,y]
 while True:
+    clock.tick(fps)
     screen.blit(bg1,(0,0))
     screen.blit(bg2,(groundvel,550))
     groundvel-= speed
-    if groundvel>35:
-        pass
+    drawtext(str(score),40,35)
+    if abs(groundvel)>35:
+        groundvel= 0
     Birdgroup.draw(screen)
     Birdgroup.update()
+    toppipe= pipe(screenwidth/2,screenheight/2,1)
+    bottompipe= pipe(screenwidth/2,screenheight/2,-1)
     pygame.display.update()
     for event in pygame.event.get():
         if event.type==pygame.QUIT:
