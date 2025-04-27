@@ -1,4 +1,6 @@
-import pygame,sys
+import pygame,sys,random
+flying=False
+gameover=False
 pygame.init()
 screenwidth= 800
 screenheight= 600
@@ -13,6 +15,9 @@ speed= 4
 fps= 60
 font= pygame.font.SysFont("Bauhaus 93",60)
 score= 0
+pipegap=150
+pipefrequency= 1500
+lastpipe=pygame.time.get_ticks()
 clock= pygame.time.Clock()
 class Bird(pygame.sprite.Sprite):
     def __init__(self,x,y):
@@ -33,6 +38,7 @@ class Bird(pygame.sprite.Sprite):
 flappy= Bird(100,300)
 Birdgroup= pygame.sprite.Group()
 Birdgroup.add(flappy)
+Pipegroup= pygame.sprite.Group()
 def drawtext(text,x,y):
     txt= font.render(text,True,"navy")
     screen.blit(txt,(x,y))
@@ -43,21 +49,34 @@ class pipe(pygame.sprite.Sprite):
         self.rect= self.image.get_rect()
         if position== 1:
             self.image= pygame.transform.flip(self.image,False,True)
-            self.rect.bottomleft= [x,y]
+            self.rect.bottomleft= [x,y-int(pipegap/2)]
         elif position== -1:
-            self.rect.topleft= [x,y]
+            self.rect.topleft= [x,y+int(pipegap/2)]
+    def update(self):
+        self.rect.x-=speed
+        if self.rect.right<0:
+            self.kill()
 while True:
     clock.tick(fps)
     screen.blit(bg1,(0,0))
+    Birdgroup.draw(screen)
+    Birdgroup.update()
+    if flying==True and gameover==False:
+        timenow= pygame.time.get_ticks()
+        if timenow- lastpipe > pipefrequency:
+            pipeheight=random.randint(-100,100)
+            toppipe= pipe(screenwidth,screenheight/2+pipeheight,1)
+            bottompipe= pipe(screenwidth,screenheight/2+pipeheight,-1)
+            Pipegroup.add(toppipe)
+            Pipegroup.add(bottompipe)
+            lastpipe=timenow
+    Pipegroup.draw(screen)
+    Pipegroup.update()
     screen.blit(bg2,(groundvel,550))
     groundvel-= speed
     drawtext(str(score),40,35)
     if abs(groundvel)>35:
         groundvel= 0
-    Birdgroup.draw(screen)
-    Birdgroup.update()
-    toppipe= pipe(screenwidth/2,screenheight/2,1)
-    bottompipe= pipe(screenwidth/2,screenheight/2,-1)
     pygame.display.update()
     for event in pygame.event.get():
         if event.type==pygame.QUIT:
