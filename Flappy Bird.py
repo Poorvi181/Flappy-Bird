@@ -17,13 +17,17 @@ font= pygame.font.SysFont("Bauhaus 93",60)
 score= 0
 pipegap=150
 pipefrequency= 1500
-lastpipe=pygame.time.get_ticks()
+passpipe=False
+lastpipe=pygame.time.get_ticks()- pipefrequency
+
 clock= pygame.time.Clock()
 class Bird(pygame.sprite.Sprite):
     def __init__(self,x,y):
         pygame.sprite.Sprite.__init__(self)
         self.images= []
         self.index= 0
+        self.click=False
+        self.vel=0
         for i in range(1,4):
             img= pygame.image.load(f"GameDev2/bird{i}.png")
             self.images.append(img)
@@ -35,6 +39,19 @@ class Bird(pygame.sprite.Sprite):
         if self.index >= len(self.images):
             self.index= 0
         self.image= self.images[self.index]
+        if flying==True:
+            self.vel+=0.5
+            #gravity
+        if self.rect.bottom<560:
+            self.rect.y+=int(self.vel)
+        if gameover==False:
+            if pygame.mouse.get_pressed()[0]==1 and self.click==False:
+                self.click=True
+                self.vel=-11
+                self.image=pygame.transform.rotate(self.images[self.index],+20)
+            if pygame.mouse.get_pressed()[0]==0:
+                self.click= False
+                self.image=pygame.transform.rotate(self.images[self.index],-20)
 flappy= Bird(100,300)
 Birdgroup= pygame.sprite.Group()
 Birdgroup.add(flappy)
@@ -61,7 +78,7 @@ while True:
     screen.blit(bg1,(0,0))
     Birdgroup.draw(screen)
     Birdgroup.update()
-    if flying==True and gameover==False:
+    if gameover==False:
         timenow= pygame.time.get_ticks()
         if timenow- lastpipe > pipefrequency:
             pipeheight=random.randint(-100,100)
@@ -70,6 +87,15 @@ while True:
             Pipegroup.add(toppipe)
             Pipegroup.add(bottompipe)
             lastpipe=timenow
+    if len(Pipegroup)>0:
+        if Birdgroup.sprites()[0].rect.left>Pipegroup.sprites()[0].rect.left\
+        and Birdgroup.sprites()[0].rect.right<Pipegroup.sprites()[0].rect.right\
+        and passpipe==False:
+            passpipe=True
+        if passpipe==True:
+            if Birdgroup.sprites()[0].rect.left>Pipegroup.sprites()[0].rect.right:
+                score+=1
+                passpipe=False
     Pipegroup.draw(screen)
     Pipegroup.update()
     screen.blit(bg2,(groundvel,550))
@@ -77,7 +103,11 @@ while True:
     drawtext(str(score),40,35)
     if abs(groundvel)>35:
         groundvel= 0
-    pygame.display.update()
     for event in pygame.event.get():
         if event.type==pygame.QUIT:
             sys.exit()
+        if event.type==pygame.MOUSEBUTTONDOWN and flying==False and gameover==False:
+            flying=True
+            
+    pygame.display.update()
+
