@@ -73,12 +73,33 @@ class pipe(pygame.sprite.Sprite):
         self.rect.x-=speed
         if self.rect.right<0:
             self.kill()
+class Button:
+    def __init__(self,x,y,image):
+        self.image=image
+        self.rect=self.image.get_rect()
+        self.rect.topleft=(x,y)
+    def draw(self):
+        action=False
+        pos=pygame.mouse.get_pos()
+        if self.rect.collidepoint(pos):
+            if pygame.mouse.get_pressed()[0]==True:
+                action=True
+        screen.blit(self.image,(self.rect.x,self.rect.y))
+        return action
+bimg=pygame.image.load("GameDev2/restart.png")
+b=Button(screenwidth/2,screenheight/2,bimg)
+def reset_game():
+    Pipegroup.empty()
+    flappy.rect.x=100
+    flappy.rect.y=int(screenheight/2)
+    score=0
+    return score
 while True:
     clock.tick(fps)
     screen.blit(bg1,(0,0))
     Birdgroup.draw(screen)
     Birdgroup.update()
-    if gameover==False:
+    if gameover==False and flying==True:
         timenow= pygame.time.get_ticks()
         if timenow- lastpipe > pipefrequency:
             pipeheight=random.randint(-100,100)
@@ -96,13 +117,23 @@ while True:
             if Birdgroup.sprites()[0].rect.left>Pipegroup.sprites()[0].rect.right:
                 score+=1
                 passpipe=False
+    if pygame.sprite.groupcollide(Birdgroup,Pipegroup,False,False):
+        gameover=True
+    if flappy.rect.bottom>=570:
+        gameover=True
+        flying=False
     Pipegroup.draw(screen)
     Pipegroup.update()
     screen.blit(bg2,(groundvel,550))
-    groundvel-= speed
     drawtext(str(score),40,35)
-    if abs(groundvel)>35:
-        groundvel= 0
+    if gameover==False:
+        groundvel-= speed
+        if abs(groundvel)>35:
+            groundvel= 0
+    if gameover==True:
+        if b.draw():
+            gameover=False
+            score=reset_game()
     for event in pygame.event.get():
         if event.type==pygame.QUIT:
             sys.exit()
@@ -110,4 +141,5 @@ while True:
             flying=True
             
     pygame.display.update()
+
 
